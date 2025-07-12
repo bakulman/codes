@@ -8,118 +8,138 @@ using namespace std;
 #define ff(i, a, b) for(int i = a; i < b; ++i)
 typedef long long ll;
 typedef unsigned long long ull;
+#define int long long 
 
-constexpr int N = 1e6;
-int a[N], b[N], c[N];
+const int N = 1e5 + 100;
+int n, m, idx, root;
 
-string Lplus(string aa, string bb) {
-	int la = aa.size(), lb = bb.size();
+struct Node{
+	int l, r, val, key, size, cnt;
+}tr[N];
 
-	for(int i = 0;i < la; ++i) {
-		a[i] = aa[la - i - 1] - '0';
-	}
-	for(int i = 0; i < lb; ++i) b[i] = bb[lb - i - 1] - '0';
-
-	int len = max(la, lb);
-
-	for(int i = 0;i <= len; ++i) {
-		c[i] += a[i] + b[i];
-		c[i+1] += c[i]/10;
-		c[i] %= 10;
-	}
-
-	int i = len;
-	for(;i > 0 && c[i] == 0;-- i);
-
-	string ans = "";
-	for(;i >= 0; --i) ans += c[i] + '0';
-
-	return ans;
-
+void pushup(int p) {
+	tr[p].size = tr[tr[p].l].size + tr[tr[p].r].size + tr[p].cnt;
 }
 
-bool scmp(string aa, string bb) {
-	if(aa.size() != bb.size()) return aa.size() > bb.size();
-
-	for(int i = 0; i < aa.size(); ++i) {
-		if(aa[i] != bb[i]) return aa[i] > bb[i];
-	}
-	return true;
+int get_node(int key) {
+	tr[++idx].key = key;
+	tr[idx].val = rand();
+	tr[idx].size = tr[idx].cnt = 1;
+	return idx;
 }
 
-string Lminus(string aa, string bb) {
-	string ans = "";
-	if(!scmp(aa, bb)) ans = "-", swap(aa, bb);
-
-	int la = aa.size(), lb = bb.size();
-	
-	for(int i = 0;i < la; ++i) a[i] = aa[la - i - 1] - '0';
-	for(int i = 0; i < lb; ++i) b[i] = bb[lb - i - 1] - '0';
-
-	int len = max(la, lb);
-
-	for(int i = 0; i < len; ++i) {
-		c[i] += a[i] - b[i];
-		if(c[i] < 0) c[i] += 10, c[i+1]--;
-	}
-
-	int i = len;
-	for(;i > 0 && c[i] == 0; --i);
-
-	for(;i >= 0; --i) {
-		ans += c[i] + '0';
-	}
-
-	return ans;
+int INF = 1e8;
+void build() {
+	get_node(-INF), get_node(INF);
+	root = 1, tr[root].l = 2;
+	pushup(root);
 }
 
-string Lsgmlut(string aa, string bb) {
-	int lb = bb.size();
-	for(int i = 0; i < lb; ++i)  b[i] = bb[lb-i-1] - '0';
-
-	int na = stoi(aa);
-	for(int i = 0;i < lb; ++i) {
-		c[i] += na * b[i];
-		c[i+1] += c[i]/10;
-		c[i] %= 10;
-	}
-
-	int len = lb;
-	while(c[len]) {
-		c[len + 1] += c[len] / 10;
-		c[len] %= 10;
-		len++;
-	}
-
-	string ans = "";
-	for(int i = len-1;i >= 0; ++i) ans += c[i] + '0';
-
-	for(int i = 0;i < len; ++i) a[i] = b[i] = c[i] = 0;
-
-	return ans;
+void zig(int &p) {
+	int q = tr[p].l;
+	tr[p].l = tr[q].r;
+	tr[q].r = p;
+	p = q;
+	pushup(tr[p].r), pushup(p);
 }
-int main() {
+
+void zag(int &p) {
+	int q = tr[p].r;
+	tr[p].r = tr[q].l;
+	tr[q].l = p;
+	p = q;
+	pushup(tr[p].l), pushup(p);
+}
+
+void inser(int x, int &p = root) {
+	if(!p) p = get_node(x);
+	else if(tr[p].key == x) tr[p].cnt++;
+	else if(tr[p].key < x) {
+		inser(tr[p].r, x);
+		if(tr[tr[p].r].val > tr[p].val)
+			zag(p);
+	}
+	else if(tr[p].key > x) {
+		inser(tr[p].l, x);
+		if(tr[tr[p].l].val > tr[p].val)
+			zig(p);
+	}
+
+	pushup(p);
+}
+
+void rm(int key, int &p = root) {
+	if(!p) return;
+
+	if(tr[p].key == key) {
+		if(tr[p].cnt > 1) tr[p].cnt--;
+		else if(tr[p].l || tr[p].r) {
+			if(!tr[p].r || tr[tr[p].l].val > tr[tr[p].r].val) {
+				zig(p);
+				rm(key, tr[p].r);
+			}
+			else {
+				zag(p);
+				rm(key, tr[p].l);
+			}
+		}
+		else p = 0;
+	}
+	else if(tr[p].key > key) rm(key, tr[p].l);
+	else rm(key, tr[p].r); 
+
+	pushup(p);
+}
+
+int get_rank_by_key(int key, int p = root) {
+	if(!p) return 1;
+
+	if(tr[p].key == key) return tr[tr[p].l].size + 1;
+	else if(tr[p].key > key) return get_rank_by_key(key, tr[p].l);
+	return tr[p].cnt + tr[tr[p].l].size + get_rank_by_key(key, tr[p].r);
+}
+
+int get_key_by_rank(int rank, int p = root) {
+	if(!rank) return INF;
+
+	if(rank <= tr[tr[p].l].size) return get_rank_by_key(rank, tr[p].l);
+	if(rank <= tr[tr[p].l].size + tr[p].cnt) return tr[p].key;
+	return get_key_by_rank(rank - tr[tr[p].l].size - tr[p].cnt, tr[p].r);
+}
+
+int get_prev(int key, int p = root) {
+	if(!p) return -INF;
+	if(tr[p].key >= key) return get_prev(tr[p].l, key);
+	return max(tr[p].key, get_prev(tr[p].r, key));
+}
+
+int get_next(int key, int p = root) {
+	if(!p) return INF;
+	if(tr[p].key <= key) return get_next(key, tr[p].r);
+	return min(tr[p].key, get_next(key, tr[p].l));
+}
+
+signed main() {
 //	freopen("an", "r", stdin);
 	ios::sync_with_stdio(0);
 	cin.tie(0);
 	cout.tie(0);
 
-	int t;
-	cin >> t;
+	build();
 
-	while(t--) {
-		int n, nn;
-		cin >> n >> nn;
+	cin >> n;
 
-		string s = "1";
+	for(int i = 0;i < n; ++i) {
+		int op, x;
+		cin >> op >> x;
 
-		for(int i = 1;i <= n; ++i) {
-			s = Lsgmlut(to_string(i), s);
-		}
-
-		int cnt = 0;
-		for(auto c : s) if(c == nn + '0') cnt++;
-		cout << cnt << endl;
+		if(op == 1) inser(x);
+		else if(op == 2) rm(x);
+		else if(op == 3) cout << get_rank_by_key(x) -1 << endl;
+		else if(op == 4) cout << get_key_by_rank(x+1) << endl;
+		else if(op == 5) cout << get_prev(x) << endl;
+		else cout << get_next(x) << endl;
 	}
+
 	return 0;
 }
