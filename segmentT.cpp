@@ -1,4 +1,6 @@
-
+//注意左右移方向
+//注意分割后边界mid+1
+//注意参数意义与使用l和cl
 #include <bits/stdc++.h>
 using namespace std;
 using ll = long long;
@@ -30,7 +32,7 @@ ll query(int l, int r, int p = 1, int cl = 1, int cr = n)  //查询，相同的�
     push_down(p, cr - cl + 1);  //否则就往下传递标记，向下搜索
     ll mid = (cl + cr) >> 1, ans = 0;  //把当前节点范围一分为二
     if (mid >= l) ans += query(l, r, p << 1, cl, mid);  //左子树被包含的情况，访问左子树
-    if (mid < r) ans += query(l, r, p << 1 | 1, mid + 1, cr);  //右子树被包含的情况，访问右子树
+    if (mid < r) ans += query(l, r, p << 1 | 1, mid + 1, cr);  //右子树被包含的情况，访问右子树,判断mid 《 r是因为右节点是从mid+1开始的
     return ans;  //最后返回答案
 }
 void update(int l, int r, int d, int p = 1, int cl = 1, int cr = n)  //修改区间，每个区间添加d
