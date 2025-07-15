@@ -10,26 +10,7 @@ typedef long long ll;
 typedef unsigned long long ull;
 #define int long long 
 
-int dist[400][400];
-void Floyd(int n) {
-	for(itn k = 1; k <= n; ++k) 
-		for(int i = 1; i <= n; ++i)
-			for(itn j = 1; j <= n; ++j)
-				dist[i][j] = min(dist[i][j], dis[i][k] + dis[k][j]);
-	return;
-}
 
-void init() {
-	memset(dist, 0x3f, sizeof(dist));
-
-	for(int i = 1; i <= n; ++i) dist[i][i] = 0;
-
-	for(int i = 0; i < m; ++i) {
-		int u, v, w;
-		cin >> u >> v >> w;
-		dist[u][v] = w;
-	}
-}
 
 signed main() {
 //	freopen("an", "r", stdin);
